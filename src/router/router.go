@@ -14,8 +14,13 @@ import (
 
 const (
   Assets = "/tmp"
-  Cache = "./public"
   Base = "/images/catalog/product/"
+)
+
+const (
+  PathComponentsMax = 3
+  QualityIndex = 4
+  ResolutionIndex = 3
 )
 
 func getFilePathResQuality(url string) (path string, width, height, quality int) {
@@ -23,16 +28,19 @@ func getFilePathResQuality(url string) (path string, width, height, quality int)
   path = strings.TrimPrefix(url,Base)
   fields := strings.Split(path,"/")
   length := len(fields)
-  path = Base + strings.Join(fields[0:3],"/") + "/" + fields[length-1]
+  path = Base + strings.Join(fields[:PathComponentsMax],"/") + "/" + fields[length-1]
+  quality = 70
+
   switch (length) {
     case 6:
-      quality,_ = strconv.Atoi(fields[4])
-      res = strings.Split(fields[3],"x")
+      quality,_ = strconv.Atoi(fields[QualityIndex])
+      res = strings.Split(fields[ResolutionIndex],"x")
     case 5:
-      res = strings.Split(fields[3],"x")
+      res = strings.Split(fields[ResolutionIndex],"x")
     case 4:
     default:
   }
+
   if (res != nil) {
     width,_ = strconv.Atoi(res[0])
     height,_ = strconv.Atoi(res[1])
@@ -40,7 +48,7 @@ func getFilePathResQuality(url string) (path string, width, height, quality int)
   return
 }
 
-func Init() *http.ServeMux {
+func Init(cacheDir string) *http.ServeMux {
   mux := http.NewServeMux()
 
   mux.HandleFunc("/images/catalog/product/", func(w http.ResponseWriter, r* http.Request) {
@@ -69,7 +77,7 @@ func Init() *http.ServeMux {
     jpeg.Encode(w,m, &q)
 
     // cache the result as well, on disk
-    cachePath := Cache + r.URL.Path
+    cachePath := cacheDir + r.URL.Path
     err = os.MkdirAll(path.Dir(cachePath),os.ModeDir | 0777)
     if err == nil {
       out, _ := os.Create(cachePath)
@@ -82,7 +90,7 @@ func Init() *http.ServeMux {
   })
 
   mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-    fmt.Fprintf(w, "Welcome to the home page!")
+    fmt.Fprintf(w, "Welcome to Paytm.")
   })
 
   return mux

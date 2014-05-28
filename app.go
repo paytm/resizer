@@ -3,14 +3,16 @@ package main
 import (
   "github.com/codegangsta/negroni"
   "router"
-  "net/http"
+)
+
+const (
+  CacheDir = "./public"
 )
 
 func main() {
-  mux := router.Init()
+  mux := router.Init(CacheDir)
 
   n := negroni.Classic()
-  n.Use(negroni.NewStatic(http.Dir("./public")))
   n.UseHandler(mux)
   n.Run(":3000")
 }
