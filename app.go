@@ -9,6 +9,7 @@ import (
 
 const (
   CacheDir = "./public"
+  AssetServer = "http://assets.paytm.com"
 )
 
 func main() {
@@ -18,7 +19,7 @@ func main() {
   })
 
   n := negroni.Classic()
-  n.Use(negroni.HandlerFunc(router.Resizer("")))
+  n.Use(negroni.HandlerFunc(router.Resizer(CacheDir,AssetServer)))
   n.UseHandler(mux)
   n.Run(":3000")
 }
