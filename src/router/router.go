@@ -108,7 +108,7 @@ func Resizer(cacheDir string,upstream string) (HandlerFunc) {
       return
     }
 
-    m := resize.Thumbnail(uint(width), uint(height), img, resize.Lanczos3)
+    m := resize.Resize(uint(width), uint(height), img, resize.NearestNeighbor)
     q := jpeg.Options{ Quality: quality }
     jpeg.Encode(w,m, &q)
 
