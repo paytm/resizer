@@ -1,7 +1,6 @@
 package router
 
 import (
-  "fmt"
   "net/http"
   "os"
   "log"
@@ -22,6 +21,8 @@ const (
   QualityIndex = 4
   ResolutionIndex = 3
 )
+
+type HandlerFunc func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc)
 
 func getFilePathResQuality(url string) (path string, width, height, quality int) {
   var res []string
@@ -48,15 +49,17 @@ func getFilePathResQuality(url string) (path string, width, height, quality int)
   return
 }
 
-func Init(cacheDir string) *http.ServeMux {
-  mux := http.NewServeMux()
+func Resizer(cacheDir string) (HandlerFunc) {
 
-  mux.HandleFunc("/images/catalog/product/", func(w http.ResponseWriter, r* http.Request) {
+  return func(w http.ResponseWriter, r* http.Request, next http.HandlerFunc) {
+
+    if (strings.HasPrefix(r.URL.Path,"/images/catalog/product/") == false) {
+      log.Println("skipping ",r.URL.Path)
+      next(w,r);
+      return
+    }
 
     filePath,width,height,quality := getFilePathResQuality(r.URL.Path)
-
-    log.Println(filePath,width,height,quality)
-    log.Println("You requested for ", Assets + filePath);
 
     file, err := os.Open(Assets + filePath);
     defer file.Close()
@@ -77,21 +80,17 @@ func Init(cacheDir string) *http.ServeMux {
     jpeg.Encode(w,m, &q)
 
     // cache the result as well, on disk
-    cachePath := cacheDir + r.URL.Path
-    err = os.MkdirAll(path.Dir(cachePath),os.ModeDir | 0777)
-    if err == nil {
-      out, _ := os.Create(cachePath)
-      jpeg.Encode(out,m,&q)
-      out.Close()
-      log.Println("cached into " + cachePath);
-    } else {
-      log.Println("cache fail ",err.Error())
+    if (cacheDir != "") {
+      cachePath := cacheDir + r.URL.Path
+      err = os.MkdirAll(path.Dir(cachePath),os.ModeDir | 0777)
+      if err == nil {
+        out, _ := os.Create(cachePath)
+        jpeg.Encode(out,m,&q)
+        out.Close()
+        log.Println("cached into " + cachePath);
+      } else {
+        log.Println("cache fail ",err.Error())
+      }
     }
-  })
-
-  mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-    fmt.Fprintf(w, "Welcome to Paytm.")
-  })
-
-  return mux
+  }
 }
