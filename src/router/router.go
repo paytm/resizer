@@ -30,7 +30,11 @@ func getFilePathResQuality(url string) (path string, width, height, quality int)
   fields := strings.Split(path,"/")
   length := len(fields)
   path = Base + strings.Join(fields[:PathComponentsMax],"/") + "/" + fields[length-1]
+
+  // defaults
   quality = 70
+  width = 0
+  height = 0
 
   switch (length) {
     case 6:
@@ -60,6 +64,12 @@ func Resizer(cacheDir string) (HandlerFunc) {
     }
 
     filePath,width,height,quality := getFilePathResQuality(r.URL.Path)
+
+    if (width == 0 && height == 0) {
+      log.Println("skipping resize ",r.URL.Path)
+      http.ServeFile(w,r,Assets + filePath)
+      return
+    }
 
     file, err := os.Open(Assets + filePath);
     defer file.Close()
