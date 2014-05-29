@@ -14,38 +14,51 @@ import (
 
 const (
   Assets = "/tmp"
-  Base = "/images/catalog/product/"
+  Base = "/images/catalog/"
 )
 
 const (
-  PathComponentsMax = 3
-  QualityIndex = 4
-  ResolutionIndex = 3
+  PathComponentsProductMax = 4
+  PathComponentsCategoryMax = 2
+  QualityIndex = 5
+  ResolutionIndex = 4
 )
 
 type HandlerFunc func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc)
 
 func getFilePathResQuality(url string) (path string, width, height, quality int) {
   var res []string
+  var resq []string
   path = strings.TrimPrefix(url,Base)
   fields := strings.Split(path,"/")
   length := len(fields)
-  path = Base + strings.Join(fields[:PathComponentsMax],"/") + "/" + fields[length-1]
+
+  if fields[0] == "category"  {
+    path = Base +  strings.Join(fields[:PathComponentsCategoryMax],"/") + "/" + fields[length-1];
+    resq = fields[PathComponentsCategoryMax:length-1]
+  } else {
+    path = Base + strings.Join(fields[:PathComponentsProductMax],"/") + "/" + fields[length-1]
+    resq = fields[PathComponentsProductMax:length-1]
+  }
+
+  log.Println(resq);
+  log.Println(path);
 
   // defaults
   quality = 70
   width = 0
   height = 0
 
-  switch (length) {
-    case 6:
-      quality,_ = strconv.Atoi(fields[QualityIndex])
-      res = strings.Split(fields[ResolutionIndex],"x")
-    case 5:
-      res = strings.Split(fields[ResolutionIndex],"x")
-    case 4:
+  switch (len(resq)) {
+    case 2:
+      quality,_ = strconv.Atoi(resq[1])
+      res = strings.Split(resq[0],"x")
+    case 1:
+      res = strings.Split(resq[0],"x")
     default:
   }
+
+  log.Println(res)
 
   if (res != nil) {
     width,_ = strconv.Atoi(res[0])
@@ -76,7 +89,7 @@ func Resizer(cacheDir string,ups string) (HandlerFunc) {
 
   return func(w http.ResponseWriter, r* http.Request, next http.HandlerFunc) {
 
-    if (strings.HasPrefix(r.URL.Path,"/images/catalog/product/") == false) {
+    if (strings.HasPrefix(r.URL.Path,"/images/catalog/") == false) {
       log.Println("skipping ",r.URL.Path)
       next(w,r);
       return

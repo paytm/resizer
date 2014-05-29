@@ -3,7 +3,6 @@ package main
 import (
   "github.com/codegangsta/negroni"
   "net/http"
-  "fmt"
   "router"
   "code.google.com/p/gcfg"
 )
@@ -35,7 +34,7 @@ func main() {
 
   mux := http.NewServeMux()
   mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
-    fmt.Fprintf(w, "Welcome to Paytm.")
+    http.Error(w, "File not found", http.StatusNotFound)
   })
 
   n := negroni.Classic()
