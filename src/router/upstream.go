@@ -9,7 +9,7 @@ import (
 )
 
 type Upstream interface {
-  ServeOriginal(w http.ResponseWriter, r *http.Request, path string) 
+  ServeOriginal(w http.ResponseWriter, r *http.Request, path string)
   Get(w http.ResponseWriter, r *http.Request, path string) (io.ReadCloser,error)
 }
 

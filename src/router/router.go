@@ -2,6 +2,7 @@ package router
 
 import (
   "net/http"
+  "net/url"
   "os"
   "log"
   "github.com/nfnt/resize"
@@ -53,14 +54,25 @@ func getFilePathResQuality(url string) (path string, width, height, quality int)
   return
 }
 
-func serveWithoutResize(w http.ResponseWriter,r *http.Request,path string) {
-  http.ServeFile(w,r,path)
-}
-
 func Resizer(cacheDir string,ups string) (HandlerFunc) {
 
+  var server Upstream
 
-  server := &HTTPUpstream{ upstreamURI: "http://assets.paytm.com" }
+  url,err := url.Parse(ups)
+  if err != nil {
+    log.Panic("Bad URL scheme")
+  }
+
+  switch url.Scheme {
+    case "http":
+      server = &HTTPUpstream{ upstreamURI: ups}
+      log.Println("Serving using " + ups)
+    case "file":
+      server = &FileUpstream{ upstreamURI: url.Path }
+      log.Println("Serving using " + url.Path)
+    default:
+      log.Panic("Unsupported url scheme " + url.Scheme)
+  }
 
   return func(w http.ResponseWriter, r* http.Request, next http.HandlerFunc) {
 

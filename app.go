@@ -30,6 +30,7 @@ func main() {
   if (err != nil) {
     cfg.Server.Port = "3000"
     cfg.Upstream.URI = "file:///tmp"
+    cfg.Server.CacheDir = ""
   }
 
   mux := http.NewServeMux()
@@ -38,7 +39,7 @@ func main() {
   })
 
   n := negroni.Classic()
-  n.Use(negroni.HandlerFunc(router.Resizer(CacheDir,AssetServer)))
+  n.Use(negroni.HandlerFunc(router.Resizer(cfg.Server.CacheDir,cfg.Upstream.URI)))
   n.UseHandler(mux)
   n.Run(":" + cfg.Server.Port)
 }
