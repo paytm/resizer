@@ -3,13 +3,14 @@ package router
 import (
   "net/http"
   "net/url"
+  "github.com/gographics/imagick/imagick"
   "os"
   "log"
-  "github.com/nfnt/resize"
-  "image/jpeg"
   "path"
   "strings"
   "strconv"
+  "mime"
+  "io/ioutil"
 )
 
 const (
@@ -41,9 +42,6 @@ func getFilePathResQuality(url string) (path string, width, height, quality int)
     resq = fields[PathComponentsProductMax:length-1]
   }
 
-  log.Println(resq);
-  log.Println(path);
-
   // defaults
   quality = 70
   width = 0
@@ -58,8 +56,6 @@ func getFilePathResQuality(url string) (path string, width, height, quality int)
     default:
   }
 
-  log.Println(res)
-
   if (res != nil) {
     width,_ = strconv.Atoi(res[0])
     height,_ = strconv.Atoi(res[1])
@@ -70,6 +66,7 @@ func getFilePathResQuality(url string) (path string, width, height, quality int)
 func Resizer(cacheDir string,ups string) (HandlerFunc) {
 
   var server Upstream
+  imagick.Initialize()
 
   url,err := url.Parse(ups)
   if err != nil {
@@ -105,24 +102,39 @@ func Resizer(cacheDir string,ups string) (HandlerFunc) {
 
 
     file,err := server.Get(w,r,filePath)
-    if (err != nil) {
+
+    if file != nil {
+      defer file.Close() // in case of 404, file still needs to be closed.
+    }
+
+    if err != nil {
       log.Println("upstream error with ",r.URL.Path)
       http.Error(w, "File not found", http.StatusNotFound)
       return
-    } else {
-      defer file.Close()
     }
 
-    img, err := jpeg.Decode(file)
+    body, err := ioutil.ReadAll(file)
+
     if err != nil {
-      log.Println("Failed to decode jpeg ")
+      log.Println("Failed to read image ", r.URL.Path)
       http.Error(w, err.Error(), http.StatusNotFound)
       return
     }
 
-    m := resize.Resize(uint(width), uint(height), img, resize.NearestNeighbor)
-    q := jpeg.Options{ Quality: quality }
-    jpeg.Encode(w,m, &q)
+    bytes,err := Resize(uint(width), uint(height), uint(quality), body)
+    if err != nil {
+      log.Println("Failed to resize image ", r.URL.Path)
+      http.Error(w, err.Error(), http.StatusNotFound)
+      return
+    }
+
+    w.Header().Set("Content-Type", mime.TypeByExtension(filePath[strings.LastIndex(filePath,"."):]))
+    w.Header().Set("Content-Length", strconv.FormatUint(uint64(len(bytes)), 10))
+    w.WriteHeader(http.StatusOK)
+
+    if r.Method != "HEAD" {
+      w.Write(bytes)
+    }
 
     // cache the result as well, on disk
     if (cacheDir != "") {
@@ -130,7 +142,7 @@ func Resizer(cacheDir string,ups string) (HandlerFunc) {
       err = os.MkdirAll(path.Dir(cachePath),os.ModeDir | 0777)
       if err == nil {
         out, _ := os.Create(cachePath)
-        jpeg.Encode(out,m,&q)
+        out.Write(bytes)
         out.Close()
         log.Println("cached into " + cachePath);
       } else {

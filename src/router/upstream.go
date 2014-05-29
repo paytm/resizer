@@ -39,9 +39,8 @@ func (u *HTTPUpstream) Get(w http.ResponseWriter, r *http.Request, path string) 
     resp,err := http.Get(u.upstreamURI + path)
 
     if (err == nil) {
-      if (resp.StatusCode == 200)  {
-        file = resp.Body
-      } else {
+      file = resp.Body
+      if (resp.StatusCode != 200)  {
         err = errors.New("Not Found")
       }
     }
