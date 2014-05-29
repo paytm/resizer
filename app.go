@@ -5,6 +5,7 @@ import (
   "net/http"
   "fmt"
   "router"
+  "code.google.com/p/gcfg"
 )
 
 const (
@@ -12,7 +13,25 @@ const (
   AssetServer = "http://assets.paytm.com"
 )
 
+type Config struct {
+  Upstream struct {
+    URI string
+  }
+  Server struct {
+   Port string
+   CacheDir string
+  }
+}
+
 func main() {
+
+  var cfg Config
+  err := gcfg.ReadFileInto(&cfg,"resizer.ini")
+  if (err != nil) {
+    cfg.Server.Port = "3000"
+    cfg.Upstream.URI = "file:///tmp"
+  }
+
   mux := http.NewServeMux()
   mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
     fmt.Fprintf(w, "Welcome to Paytm.")
@@ -21,5 +40,5 @@ func main() {
   n := negroni.Classic()
   n.Use(negroni.HandlerFunc(router.Resizer(CacheDir,AssetServer)))
   n.UseHandler(mux)
-  n.Run(":3000")
+  n.Run(":" + cfg.Server.Port)
 }

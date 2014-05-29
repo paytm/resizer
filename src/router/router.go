@@ -53,18 +53,14 @@ func getFilePathResQuality(url string) (path string, width, height, quality int)
   return
 }
 
-/*
-type Upstream interface {
-  Serve(w http.ResponseWriter, r *http.Request, path string) 
-  Get() 
-}
-*/
-
 func serveWithoutResize(w http.ResponseWriter,r *http.Request,path string) {
   http.ServeFile(w,r,path)
 }
 
-func Resizer(cacheDir string,upstream string) (HandlerFunc) {
+func Resizer(cacheDir string,ups string) (HandlerFunc) {
+
+
+  server := &HTTPUpstream{ upstreamURI: "http://assets.paytm.com" }
 
   return func(w http.ResponseWriter, r* http.Request, next http.HandlerFunc) {
 
@@ -78,28 +74,19 @@ func Resizer(cacheDir string,upstream string) (HandlerFunc) {
 
     if (width == 0 && height == 0) {
       log.Println("skipping resize ",r.URL.Path)
-      serveWithoutResize(w,r,Assets + filePath)
+      server.ServeOriginal(w,r,filePath)
       return
     }
 
-/*
-    file, err := os.Open(Assets + filePath);
-    defer file.Close()
 
-    if err != nil {
-      http.Error(w, err.Error(), http.StatusNotFound)
-      return
-    }
-*/
-
-    resp,err := http.Get(upstream + filePath)
-    if (err != nil || resp.StatusCode != 200) {
+    file,err := server.Get(w,r,filePath)
+    if (err != nil) {
       log.Println("upstream error with ",r.URL.Path)
       http.Error(w, "File not found", http.StatusNotFound)
       return
+    } else {
+      defer file.Close()
     }
-    file := resp.Body
-    defer file.Close()
 
     img, err := jpeg.Decode(file)
     if err != nil {
