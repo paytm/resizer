@@ -4,9 +4,7 @@ import (
   "net/http"
   "net/url"
   "github.com/gographics/imagick/imagick"
-  "os"
   "log"
-  "path"
   "strings"
   "strconv"
   "mime"
@@ -63,14 +61,36 @@ func getFilePathResQuality(url string) (path string, width, height, quality int)
   return
 }
 
+func downstreamHandler(ds Downstream,ch chan DSData) {
+  log.Println("Initializing downstream handler")
+  ds.Init()
+  for {
+    data, ok := <-ch
+    if ok == false {
+      break
+    }
+    log.Println("received request for " + data.path)
+    ds.Put(data)
+  }
+}
+
 func Resizer(cacheDir string,ups string) (HandlerFunc) {
 
   var server Upstream
+  var ds Downstream
+
+  chD := make(chan DSData)
+
   imagick.Initialize()
 
   url,err := url.Parse(ups)
   if err != nil {
     log.Panic("Bad URL scheme")
+  }
+
+  if cacheDir != "" {
+    ds = &S3Downstream{ downstreamURI: cacheDir }
+    go downstreamHandler(ds,chD)
   }
 
   switch url.Scheme {
@@ -128,7 +148,9 @@ func Resizer(cacheDir string,ups string) (HandlerFunc) {
       return
     }
 
-    w.Header().Set("Content-Type", mime.TypeByExtension(filePath[strings.LastIndex(filePath,"."):]))
+    mimeType := mime.TypeByExtension(filePath[strings.LastIndex(filePath,"."):])
+
+    w.Header().Set("Content-Type", mimeType)
     w.Header().Set("Content-Length", strconv.FormatUint(uint64(len(bytes)), 10))
     w.WriteHeader(http.StatusOK)
 
@@ -136,18 +158,10 @@ func Resizer(cacheDir string,ups string) (HandlerFunc) {
       w.Write(bytes)
     }
 
-    // cache the result as well, on disk
+    // cache the result
     if (cacheDir != "") {
-      cachePath := cacheDir + r.URL.Path
-      err = os.MkdirAll(path.Dir(cachePath),os.ModeDir | 0777)
-      if err == nil {
-        out, _ := os.Create(cachePath)
-        out.Write(bytes)
-        out.Close()
-        log.Println("cached into " + cachePath);
-      } else {
-        log.Println("cache fail ",err.Error())
-      }
+      log.Println("sending request to downstream for caching " + r.URL.Path)
+      chD <- DSData{data: &bytes, path: r.URL.Path, mimeType: mimeType}
     }
   }
 }

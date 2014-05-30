@@ -1,24 +1,22 @@
 package main
 
 import (
-  "github.com/codegangsta/negroni"
   "net/http"
+  "log"
   "router"
+  "github.com/codegangsta/negroni"
   "code.google.com/p/gcfg"
-)
-
-const (
-  CacheDir = "./public"
-  AssetServer = "http://assets.paytm.com"
 )
 
 type Config struct {
   Upstream struct {
     URI string
   }
+  Downstream struct {
+    URI string
+  }
   Server struct {
    Port string
-   CacheDir string
   }
 }
 
@@ -27,9 +25,9 @@ func main() {
   var cfg Config
   err := gcfg.ReadFileInto(&cfg,"resizer.ini")
   if (err != nil) {
+    log.Println("failed to read config ",err.Error())
     cfg.Server.Port = "3000"
     cfg.Upstream.URI = "file:///tmp"
-    cfg.Server.CacheDir = ""
   }
 
   mux := http.NewServeMux()
@@ -38,7 +36,7 @@ func main() {
   })
 
   n := negroni.Classic()
-  n.Use(negroni.HandlerFunc(router.Resizer(cfg.Server.CacheDir,cfg.Upstream.URI)))
+  n.Use(negroni.HandlerFunc(router.Resizer(cfg.Downstream.URI,cfg.Upstream.URI)))
   n.UseHandler(mux)
   n.Run(":" + cfg.Server.Port)
 }
