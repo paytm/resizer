@@ -21,14 +21,16 @@ func Resize(width uint, height uint, quality uint, body []byte) ([]byte, error) 
       width = owidth
       height = oheight
     } else {
-      aspectRatio := (width * 1.0)/height
+      var aspectRatio float64
+      aspectRatio = float64(owidth)/float64(oheight)
       if (height == 0) {
-        height =  width* (1.0/aspectRatio)
+        height =  uint(float64(width)/aspectRatio)
       } else {
-        width = height * aspectRatio
+        width = uint(float64(height)*aspectRatio)
       }
     }
   }
+
 
   err = mw.ThumbnailImage(width,height)
   if err != nil {
