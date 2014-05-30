@@ -18,7 +18,7 @@ type FileUpstream struct {
 }
 
 func (u *FileUpstream) ServeOriginal(w http.ResponseWriter, r*http.Request, path string) {
-  http.ServeFile(w,r,path)
+  http.ServeFile(w,r,u.upstreamURI + path)
 }
 
 func (u *FileUpstream) Get(w http.ResponseWriter, r *http.Request, path string) (file io.ReadCloser, err error) {
@@ -31,6 +31,7 @@ type HTTPUpstream struct {
 }
 
 func (u *HTTPUpstream) ServeOriginal(w http.ResponseWriter, r*http.Request, path string) {
+  log.Println("serving ", u.upstreamURI + path)
   http.Redirect(w,r,u.upstreamURI + path,302)
 }
 

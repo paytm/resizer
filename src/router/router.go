@@ -95,7 +95,7 @@ func Resizer(cacheDir string,ups string) (HandlerFunc) {
     filePath,width,height,quality := getFilePathResQuality(r.URL.Path)
 
     if (width == 0 && height == 0) {
-      log.Println("skipping resize ",r.URL.Path)
+      log.Println("skipping resize for ",filePath)
       server.ServeOriginal(w,r,filePath)
       return
     }
