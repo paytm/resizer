@@ -1,4 +1,4 @@
-package resizer
+package resized
 
 import (
   "github.com/gographics/imagick/imagick"

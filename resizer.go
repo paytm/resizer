@@ -3,7 +3,7 @@ package main
 import (
   "net/http"
   "log"
-  "github.com/qzaidi/resizer/resizer"
+  "github.com/qzaidi/resizer/resized"
   "github.com/codegangsta/negroni"
   "code.google.com/p/gcfg"
 )
@@ -36,7 +36,7 @@ func main() {
   })
 
   n := negroni.Classic()
-  n.Use(negroni.HandlerFunc(resizer.Resizer(cfg.Downstream.URI,cfg.Upstream.URI)))
+  n.Use(negroni.HandlerFunc(resized.Resizer(cfg.Downstream.URI,cfg.Upstream.URI)))
   n.UseHandler(mux)
   n.Run(":" + cfg.Server.Port)
 }
