@@ -1,4 +1,4 @@
-package router
+package resizer
 
 import (
   "github.com/gographics/imagick/imagick"

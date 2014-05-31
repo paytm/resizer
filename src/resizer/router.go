@@ -1,4 +1,4 @@
-package router
+package resizer
 
 import (
   "net/http"
