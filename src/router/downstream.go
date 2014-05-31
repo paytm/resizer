@@ -51,7 +51,7 @@ type S3Downstream struct {
 
 func (d *S3Downstream) Init() error {
   u,err := url.Parse(d.downstreamURI)
-  if err != nil || u.Scheme != "s3" {
+  if err != nil || u.Scheme != "s3" || u.User == nil {
     log.Panic("Bad URL scheme ",d.downstreamURI)
   }
 
