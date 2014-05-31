@@ -3,6 +3,7 @@ package main
 import (
   "net/http"
   "log"
+  "os"
   "github.com/qzaidi/resizer/resized"
   "github.com/codegangsta/negroni"
   "code.google.com/p/gcfg"
@@ -20,14 +21,22 @@ type Config struct {
   }
 }
 
+func readConfig(cfg *Config,path string) bool {
+  err := gcfg.ReadFileInto(cfg,path + "/resizer.ini")
+  if err == nil {
+    log.Println("read config from ",path)
+    return true
+  }
+  return false
+}
+
 func main() {
 
   var cfg Config
-  err := gcfg.ReadFileInto(&cfg,"resizer.ini")
-  if (err != nil) {
-    log.Println("failed to read config ",err.Error())
-    cfg.Server.Port = "3000"
-    cfg.Upstream.URI = "file:///tmp"
+  ok := readConfig(&cfg, ".") || readConfig(&cfg,"/etc")
+  if (!ok) {
+    log.Println("failed to read resizer.ini from CWD or /etc")
+    os.Exit(1)
   }
 
   mux := http.NewServeMux()

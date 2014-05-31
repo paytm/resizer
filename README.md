@@ -11,4 +11,17 @@ Set your GOPATH, then install using
 go get github.com/qzaidi/resizer
 ~~~
 
-then edit the configuration file (resizer.ini) 
+This will create $GOPATH/bin/resizer, which is an http server.
+
+Before running resizer binary, make sure to create a config file (in CWD or in /etc). Here's a sample
+
+~~~
+[Server]
+Port = 4000 # Port to listen on
+
+[Upstream]
+URI = http://catalogadmin.paytm.com # Server to download source images from
+
+[Downstream]
+URI = s3://ABCDEFGHIJ:yoursecrets3keygoeshere@assets.paytm.com # S3 server to save resized images to
+~~~
