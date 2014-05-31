@@ -3,7 +3,7 @@ package main
 import (
   "net/http"
   "log"
-  "resizer"
+  "github.com/qzaidi/resizer/resizer"
   "github.com/codegangsta/negroni"
   "code.google.com/p/gcfg"
 )
