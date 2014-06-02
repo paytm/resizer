@@ -13,7 +13,7 @@ go get github.com/qzaidi/resizer
 
 This will create $GOPATH/bin/resizer, which is an http server.
 
-Before running resizer binary, make sure to create a config file (in CWD or in /etc). Here's a sample
+Before running resizer binary, make sure to create a config file (in CWD or in /etc). There's a sample config in cfg/
 
 ~~~
 [Server]
