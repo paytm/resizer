@@ -26,19 +26,28 @@ type FileDownstream struct {
 
 func (d *FileDownstream) Init() error {
   // TODO: check to see if downstreamURI is valid
+  log.Println("Intialising file downstream with path ", d.downstreamURI)
   return nil
 }
 
 func (d *FileDownstream) Put (data DSData) error {
   cachePath := d.downstreamURI + data.path
-  err := os.MkdirAll(path.Dir(cachePath),os.ModeDir | 0777)
+
+  // existence check
+  _,err := os.Stat(cachePath)
   if err == nil {
-    out, _ := os.Create(cachePath)
-    out.Write(*data.data)
-    out.Close()
-    log.Println("cached into " + cachePath);
-  } else {
-    log.Println("cache fail ",err.Error())
+    log.Println("file already exists, skipping ", cachePath)
+    return nil
+  }
+
+  err = os.MkdirAll(path.Dir(cachePath),os.ModeDir | 0777)
+  if err == nil {
+    out, err:= os.Create(cachePath)
+    if err == nil {
+      out.Write(*data.data)
+      out.Close()
+      log.Println("cached into " + cachePath);
+    }
   }
   return err
 }

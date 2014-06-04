@@ -74,7 +74,7 @@ func downstreamHandler(ds Downstream,ch chan DSData) {
   }
 }
 
-func Resizer(cacheDir string,ups string) (HandlerFunc) {
+func Resizer(dws string,ups string) (HandlerFunc) {
 
   var server Upstream
   var ds Downstream
@@ -88,11 +88,6 @@ func Resizer(cacheDir string,ups string) (HandlerFunc) {
     log.Panic("Bad URL scheme")
   }
 
-  if cacheDir != "" {
-    ds = &S3Downstream{ downstreamURI: cacheDir }
-    go downstreamHandler(ds,chD)
-  }
-
   switch url.Scheme {
     case "http":
       server = &HTTPUpstream{ upstreamURI: ups}
@@ -102,6 +97,27 @@ func Resizer(cacheDir string,ups string) (HandlerFunc) {
       log.Println("Serving using " + url.Path)
     default:
       log.Panic("Unsupported url scheme " + url.Scheme)
+  }
+
+  if dws != "" {
+    url,err = url.Parse(dws)
+
+    if err != nil {
+      log.Panic("Bad url scheme for downstream")
+    }
+
+    switch url.Scheme {
+      case "s3":
+        ds = &S3Downstream{ downstreamURI: dws }
+        log.Println("Caching using " + url.Path)
+      case "file":
+        ds = &FileDownstream{ downstreamURI: url.Path}
+        log.Println("Caching using " + url.Path)
+      default:
+        log.Panic("Unsupported downstream url scheme " + url.Scheme)
+    }
+
+    go downstreamHandler(ds,chD)
   }
 
   return func(w http.ResponseWriter, r* http.Request, next http.HandlerFunc) {
@@ -159,7 +175,7 @@ func Resizer(cacheDir string,ups string) (HandlerFunc) {
     }
 
     // cache the result
-    if (cacheDir != "") {
+    if (dws != "") {
       log.Println("sending request to downstream for caching " + r.URL.Path)
       chD <- DSData{data: &bytes, path: r.URL.Path, mimeType: mimeType}
     }
