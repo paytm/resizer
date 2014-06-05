@@ -157,6 +157,15 @@ func Resizer(dws string,ups string) (HandlerFunc) {
       return
     }
 
+    mimeType := mime.TypeByExtension(filePath[strings.LastIndex(filePath,"."):])
+    w.Header().Set("Content-Type", mimeType)
+
+    // for now, save original on downstream as well
+    if (dws != "") {
+      log.Println("issuing cache request for original ",filePath);
+      chD <- DSData{data: &body, path: filePath, mimeType: mimeType}
+    }
+
     bytes,err := Resize(uint(width), uint(height), uint(quality), body)
     if err != nil {
       log.Println("Failed to resize image ", r.URL.Path)
@@ -164,9 +173,6 @@ func Resizer(dws string,ups string) (HandlerFunc) {
       return
     }
 
-    mimeType := mime.TypeByExtension(filePath[strings.LastIndex(filePath,"."):])
-
-    w.Header().Set("Content-Type", mimeType)
     w.Header().Set("Content-Length", strconv.FormatUint(uint64(len(bytes)), 10))
     w.WriteHeader(http.StatusOK)
 
