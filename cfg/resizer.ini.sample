@@ -5,4 +5,5 @@ Port = 4000
 URI = http://catalogadmin.paytm.com
 
 [Downstream]
-URI = s3://ABCDEFGHIJKLMNOP:***************
+URI = s3://ABCDEFGHIJKLMNOP:***************@s3endpoint
+MaxThreads = 2

@@ -1,3 +1,8 @@
+/*
+ Package resized implements a negroni middleware for on the fly resizing.
+ It uses magickwand to resize, and supports a file/http origin to fetch the
+ originals from. Resized images can be optionally saved to a file/s3 downstream.
+*/
 package resized
 
 import (
@@ -11,12 +16,9 @@ import (
   "io/ioutil"
 )
 
+// These constants define the structure of a resize url
 const (
-  Assets = "/tmp"
   Base = "/images/catalog/"
-)
-
-const (
   PathComponentsProductMax = 4
   PathComponentsCategoryMax = 2
   QualityIndex = 5
@@ -61,20 +63,18 @@ func getFilePathResQuality(url string) (path string, width, height, quality int)
   return
 }
 
+/*
+ This goroutine handles write to downstream. 
+*/
 func downstreamHandler(ds Downstream,ch chan DSData) {
   log.Println("Initializing downstream handler")
-  ds.Init()
-  for {
-    data, ok := <-ch
-    if ok == false {
-      break
-    }
+  for data := range ch {
     log.Println("received request for " + data.path)
     ds.Put(data)
   }
 }
 
-func Resizer(dws string,ups string) (HandlerFunc) {
+func Resizer(dws string, numDSThreads int, ups string) (HandlerFunc) {
 
   var server Upstream
   var ds Downstream
@@ -117,7 +117,10 @@ func Resizer(dws string,ups string) (HandlerFunc) {
         log.Panic("Unsupported downstream url scheme " + url.Scheme)
     }
 
-    go downstreamHandler(ds,chD)
+    ds.Init()
+    for i := 0; i < numDSThreads; i++ {
+      go downstreamHandler(ds,chD)
+    }
   }
 
   return func(w http.ResponseWriter, r* http.Request, next http.HandlerFunc) {

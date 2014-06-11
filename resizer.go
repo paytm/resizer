@@ -15,6 +15,7 @@ type Config struct {
   }
   Downstream struct {
     URI string
+    MaxThreads int
   }
   Server struct {
    Port string
@@ -45,7 +46,7 @@ func main() {
   })
 
   n := negroni.Classic()
-  n.Use(negroni.HandlerFunc(resized.Resizer(cfg.Downstream.URI,cfg.Upstream.URI)))
+  n.Use(negroni.HandlerFunc(resized.Resizer(cfg.Downstream.URI, cfg.Downstream.MaxThreads, cfg.Upstream.URI)))
   n.UseHandler(mux)
   n.Run(":" + cfg.Server.Port)
 }
