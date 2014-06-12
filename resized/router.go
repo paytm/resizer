@@ -13,6 +13,7 @@ import (
   "strings"
   "strconv"
   "mime"
+  "errors"
   "io/ioutil"
 )
 
@@ -27,25 +28,33 @@ const (
 
 type HandlerFunc func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc)
 
-func getFilePathResQuality(url string) (path string, width, height, quality int) {
+func getFilePathResQuality(url string) (err error,path string, width, height, quality int) {
   var res []string
   var resq []string
-  path = strings.TrimPrefix(url,Base)
-  fields := strings.Split(path,"/")
+  fields := strings.Split(strings.TrimPrefix(url,Base),"/")
   length := len(fields)
-
-  if fields[0] == "category"  {
-    path = Base +  strings.Join(fields[:PathComponentsCategoryMax],"/") + "/" + fields[length-1];
-    resq = fields[PathComponentsCategoryMax:length-1]
-  } else {
-    path = Base + strings.Join(fields[:PathComponentsProductMax],"/") + "/" + fields[length-1]
-    resq = fields[PathComponentsProductMax:length-1]
-  }
 
   // defaults
   quality = 70
   width = 0
   height = 0
+
+  if fields[0] == "category"  {
+    if (length >= PathComponentsCategoryMax) {
+      path = Base +  strings.Join(fields[:PathComponentsCategoryMax],"/") + "/" + fields[length-1];
+      resq = fields[PathComponentsCategoryMax:length-1]
+    }
+  } else if fields[0] == "product" {
+    if (length >= PathComponentsProductMax) {
+      path = Base + strings.Join(fields[:PathComponentsProductMax],"/") + "/" + fields[length-1]
+      resq = fields[PathComponentsProductMax:length-1]
+    }
+  }
+
+  if (path == "") {
+    err = errors.New("Bad Path ")
+    return
+  }
 
   switch (len(resq)) {
     case 2:
@@ -125,20 +134,20 @@ func Resizer(dws string, numDSThreads int, ups string) (HandlerFunc) {
 
   return func(w http.ResponseWriter, r* http.Request, next http.HandlerFunc) {
 
+    var bytes []byte
+
     if (strings.HasPrefix(r.URL.Path,"/images/catalog/") == false) {
       log.Println("skipping ",r.URL.Path)
       next(w,r);
       return
     }
 
-    filePath,width,height,quality := getFilePathResQuality(r.URL.Path)
+    err,filePath,width,height,quality := getFilePathResQuality(r.URL.Path)
 
-    if (width == 0 && height == 0) {
-      log.Println("skipping resize for ",filePath)
-      server.ServeOriginal(w,r,filePath)
+    if (err != nil) {
+      http.Error(w, err.Error(), http.StatusForbidden)
       return
     }
-
 
     file,err := server.Get(w,r,filePath)
 
@@ -169,11 +178,15 @@ func Resizer(dws string, numDSThreads int, ups string) (HandlerFunc) {
       chD <- DSData{data: &body, path: filePath, mimeType: mimeType}
     }
 
-    bytes,err := Resize(uint(width), uint(height), uint(quality), body)
-    if err != nil {
-      log.Println("Failed to resize image ", r.URL.Path)
-      http.Error(w, err.Error(), http.StatusNotFound)
-      return
+    if (width == 0 && height == 0) {
+      bytes = body
+    } else {
+      bytes,err = Resize(uint(width), uint(height), uint(quality), body)
+      if err != nil {
+        log.Println("Failed to resize image ", r.URL.Path)
+        http.Error(w, err.Error(), http.StatusNotFound)
+        return
+      }
     }
 
     w.Header().Set("Content-Length", strconv.FormatUint(uint64(len(bytes)), 10))
@@ -183,8 +196,8 @@ func Resizer(dws string, numDSThreads int, ups string) (HandlerFunc) {
       w.Write(bytes)
     }
 
-    // cache the result
-    if (dws != "") {
+    // cache the result, if we actually did a resize
+    if (dws != "" && (width !=0 || height != 0) ) {
       log.Println("sending request to downstream for caching " + r.URL.Path)
       chD <- DSData{data: &bytes, path: r.URL.Path, mimeType: mimeType}
     }
