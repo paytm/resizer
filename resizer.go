@@ -7,6 +7,8 @@ import (
   "github.com/qzaidi/resizer/resized"
   "github.com/codegangsta/negroni"
   "code.google.com/p/gcfg"
+  "github.com/qzaidi/resizer/logging"
+  "flag"
 )
 
 type Config struct {
@@ -39,6 +41,10 @@ func main() {
     log.Println("failed to read resizer.ini from CWD or /etc")
     os.Exit(1)
   }
+
+  logging.Init()
+  flag.Parse()
+  logging.LogInit()
 
   mux := http.NewServeMux()
   mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {

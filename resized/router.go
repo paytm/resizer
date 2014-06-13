@@ -118,7 +118,7 @@ func Resizer(dws string, numDSThreads int, ups string) (HandlerFunc) {
     switch url.Scheme {
       case "s3":
         ds = &S3Downstream{ downstreamURI: dws }
-        log.Println("Caching using " + url.Path)
+        log.Println("Caching using " + url.Host)
       case "file":
         ds = &FileDownstream{ downstreamURI: url.Path}
         log.Println("Caching using " + url.Path)
