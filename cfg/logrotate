@@ -1,0 +1,9 @@
+"/var/log/resizer/*.log" {
+  daily
+  create 777 log-data log-data
+  rotate 7
+  compress
+  postrotate
+    reload market-resizer >/dev/null 2>&1 || true
+  endscript
+}
