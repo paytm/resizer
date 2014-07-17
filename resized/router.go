@@ -15,6 +15,7 @@ import (
   "mime"
   "errors"
   "io/ioutil"
+  "regexp"
 )
 
 // These constants define the structure of a resize url
@@ -27,6 +28,8 @@ const (
 )
 
 type HandlerFunc func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc)
+
+var sizeRegex *regexp.Regexp
 
 func getFilePathResQuality(url string) (err error,path string, width, height, quality int) {
   var res []string
@@ -49,6 +52,9 @@ func getFilePathResQuality(url string) (err error,path string, width, height, qu
       path = Base + strings.Join(fields[:PathComponentsProductMax],"/") + "/" + fields[length-1]
       resq = fields[PathComponentsProductMax:length-1]
     }
+  } else if matches := sizeRegex.FindString(url); matches != "" {
+     resq = []string { strings.TrimPrefix(matches,"/") }
+     path = strings.Join(strings.Split(url,matches),"/")
   }
 
   if (path == "") {
@@ -63,6 +69,7 @@ func getFilePathResQuality(url string) (err error,path string, width, height, qu
     case 1:
       res = strings.Split(resq[0],"x")
     default:
+      log.Println("bad length ",len(resq))
   }
 
   if (res != nil) {
@@ -87,7 +94,7 @@ func Resizer(dws string, numDSThreads int, ups string) (HandlerFunc) {
 
   var server Upstream
   var ds Downstream
-
+  sizeRegex = regexp.MustCompile("/([0-9]+)x([0-9]+)/")
   chD := make(chan DSData)
 
   imagick.Initialize()
@@ -200,6 +207,6 @@ func Resizer(dws string, numDSThreads int, ups string) (HandlerFunc) {
     if (dws != "" && (width !=0 || height != 0) ) {
       log.Println("sending request to downstream for caching " + r.URL.Path)
       chD <- DSData{data: &bytes, path: r.URL.Path, mimeType: mimeType}
-    }
+    } 
   }
 }
