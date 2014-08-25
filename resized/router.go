@@ -48,7 +48,7 @@ func getFilePathResQuality(url string) (err error,path string, width, height, qu
       resq = fields[PathComponentsCategoryMax:length-1]
     }
   } else if fields[0] == "product" {
-    if (length >= PathComponentsProductMax) {
+    if (length > PathComponentsProductMax) {
       path = Base + strings.Join(fields[:PathComponentsProductMax],"/") + "/" + fields[length-1]
       resq = fields[PathComponentsProductMax:length-1]
     }

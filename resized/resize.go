@@ -10,7 +10,7 @@ func Resize(width uint, height uint, quality uint, body []byte) ([]byte, error) 
 
   err := mw.ReadImageBlob(body)
   if err != nil {
-    panic(err)
+    return nil,err
   }
 
   if (width == 0 || height == 0) {
