@@ -137,7 +137,7 @@ func Resizer(dws string, numDSThreads int, ups string,valid string) (HandlerFunc
         ds = &FileDownstream{ downstreamURI: url.Path}
         log.Println("Caching using " + url.Path)
       default:
-        log.Panic("Unsupported downstream url scheme " + url.Scheme)
+        log.Panic("Unsupported downstream url scheme, disabling ", url.Scheme)
     }
 
     ds.Init()
@@ -165,7 +165,7 @@ func Resizer(dws string, numDSThreads int, ups string,valid string) (HandlerFunc
 
     if valid != "" && strings.Contains(valid,fmt.Sprintf("%dx%d",width,height)) != true {
       log.Printf("invalid size requested in %s, %dx%d\n",r.URL.Path,width,height);
-      http.Error(w, err.Error(), http.StatusForbidden)
+      http.Error(w, "Invalid size specified.", http.StatusForbidden)
       return
     }
 

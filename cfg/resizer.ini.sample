@@ -1,5 +1,6 @@
 [Server]
 Port = 4000
+ValidSizes = 210x210,300x250
 
 [Upstream]
 URI = http://catalogadmin.paytm.com
