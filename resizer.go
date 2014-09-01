@@ -4,10 +4,10 @@ import (
   "net/http"
   "log"
   "os"
-  "github.com/qzaidi/resizer/resized"
+  "github.com/paytm/resizer/resized"
   "github.com/codegangsta/negroni"
   "code.google.com/p/gcfg"
-  "github.com/qzaidi/resizer/logging"
+  "github.com/paytm/resizer/logging"
   "flag"
 )
 

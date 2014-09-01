@@ -18,7 +18,10 @@ import (
   "io/ioutil"
   "regexp"
   "bytes"
+  "time"
   "image"
+  _ "image/jpeg"
+  _ "image/png"
 )
 
 // These constants define the structure of a resize url
@@ -162,15 +165,18 @@ func Resizer(dws string, numDSThreads int, ups string) (HandlerFunc) {
     // if .webp is at the end of url, webp has been requested
     ext := filePath[strings.LastIndex(filePath,"."):]
 
-    if ext == "webp" {
+    if ext == ".webp" {
       filePath = strings.TrimSuffix(filePath,".webp")
     }
-
+    
+    start := time.Now()
     file,err := server.Get(w,r,filePath)
 
     if file != nil {
       defer file.Close() // in case of 404, file still needs to be closed.
     }
+
+    log.Printf("completed fetch for %s in %v seconds\n",filePath,time.Since(start))
 
     if err != nil {
       log.Println("upstream error with ",r.URL.Path)
@@ -195,7 +201,8 @@ func Resizer(dws string, numDSThreads int, ups string) (HandlerFunc) {
       log.Println("issuing cache request for original ",filePath);
       chD <- DSData{data: &body, path: filePath, mimeType: mimeType}
     }
-
+ 
+    start = time.Now()
     if (width == 0 && height == 0) {
       obuf = body
     } else {
@@ -211,7 +218,7 @@ func Resizer(dws string, numDSThreads int, ups string) (HandlerFunc) {
     w.WriteHeader(http.StatusOK)
 
     // if webp conversion was requested, convert to webp, after magicwand resize
-    if ext == "webp" {
+    if ext == ".webp" {
       var data bytes.Buffer
       src := bytes.NewBuffer(obuf)
 
@@ -231,6 +238,8 @@ func Resizer(dws string, numDSThreads int, ups string) (HandlerFunc) {
 
       obuf = data.Bytes()
     }
+
+    log.Println("completed resize in ",time.Since(start))
 
 
     // cache the result, if we actually did a resize
