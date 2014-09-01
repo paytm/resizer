@@ -21,6 +21,7 @@ type Config struct {
   }
   Server struct {
    Port string
+   ValidSizes string
   }
 }
 
@@ -52,7 +53,7 @@ func main() {
   })
 
   n := negroni.Classic()
-  n.Use(negroni.HandlerFunc(resized.Resizer(cfg.Downstream.URI, cfg.Downstream.MaxThreads, cfg.Upstream.URI)))
+  n.Use(negroni.HandlerFunc(resized.Resizer(cfg.Downstream.URI, cfg.Downstream.MaxThreads, cfg.Upstream.URI, cfg.Server.ValidSizes)))
   n.UseHandler(mux)
   n.Run(":" + cfg.Server.Port)
 }

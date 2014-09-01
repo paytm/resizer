@@ -19,6 +19,7 @@ import (
   "regexp"
   "bytes"
   "time"
+  "fmt"
   "image"
   _ "image/jpeg"
   _ "image/png"
@@ -96,7 +97,7 @@ func downstreamHandler(ds Downstream,ch chan DSData) {
   }
 }
 
-func Resizer(dws string, numDSThreads int, ups string) (HandlerFunc) {
+func Resizer(dws string, numDSThreads int, ups string,valid string) (HandlerFunc) {
 
   var server Upstream
   var ds Downstream
@@ -157,7 +158,13 @@ func Resizer(dws string, numDSThreads int, ups string) (HandlerFunc) {
 
     err,filePath,width,height,quality := getFilePathResQuality(r.URL.Path)
 
-    if (err != nil) {
+    if err != nil {
+      http.Error(w, err.Error(), http.StatusForbidden)
+      return
+    }
+
+    if valid != "" && strings.Contains(valid,fmt.Sprintf("%dx%d",width,height)) != true {
+      log.Printf("invalid size requested in %s, %dx%d\n",r.URL.Path,width,height);
       http.Error(w, err.Error(), http.StatusForbidden)
       return
     }
