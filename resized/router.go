@@ -9,6 +9,7 @@ import (
   "net/http"
   "net/url"
   "github.com/gographics/imagick/imagick"
+  "github.com/chai2010/webp"
   "log"
   "strings"
   "strconv"
@@ -16,6 +17,8 @@ import (
   "errors"
   "io/ioutil"
   "regexp"
+  "bytes"
+  "image"
 )
 
 // These constants define the structure of a resize url
@@ -141,7 +144,7 @@ func Resizer(dws string, numDSThreads int, ups string) (HandlerFunc) {
 
   return func(w http.ResponseWriter, r* http.Request, next http.HandlerFunc) {
 
-    var bytes []byte
+    var obuf []byte
 
     if (strings.HasPrefix(r.URL.Path,"/images/catalog/") == false) {
       log.Println("skipping ",r.URL.Path)
@@ -154,6 +157,13 @@ func Resizer(dws string, numDSThreads int, ups string) (HandlerFunc) {
     if (err != nil) {
       http.Error(w, err.Error(), http.StatusForbidden)
       return
+    }
+
+    // if .webp is at the end of url, webp has been requested
+    ext := filePath[strings.LastIndex(filePath,"."):]
+
+    if ext == "webp" {
+      filePath = strings.TrimSuffix(filePath,".webp")
     }
 
     file,err := server.Get(w,r,filePath)
@@ -176,6 +186,7 @@ func Resizer(dws string, numDSThreads int, ups string) (HandlerFunc) {
       return
     }
 
+
     mimeType := mime.TypeByExtension(filePath[strings.LastIndex(filePath,"."):])
     w.Header().Set("Content-Type", mimeType)
 
@@ -186,9 +197,9 @@ func Resizer(dws string, numDSThreads int, ups string) (HandlerFunc) {
     }
 
     if (width == 0 && height == 0) {
-      bytes = body
+      obuf = body
     } else {
-      bytes,err = Resize(uint(width), uint(height), uint(quality), body)
+      obuf,err = Resize(uint(width), uint(height), uint(quality), body)
       if err != nil {
         log.Println("Failed to resize image ", r.URL.Path)
         http.Error(w, err.Error(), http.StatusNotFound)
@@ -196,17 +207,41 @@ func Resizer(dws string, numDSThreads int, ups string) (HandlerFunc) {
       }
     }
 
-    w.Header().Set("Content-Length", strconv.FormatUint(uint64(len(bytes)), 10))
+    w.Header().Set("Content-Length", strconv.FormatUint(uint64(len(obuf)), 10))
     w.WriteHeader(http.StatusOK)
 
-    if r.Method != "HEAD" {
-      w.Write(bytes)
+    // if webp conversion was requested, convert to webp, after magicwand resize
+    if ext == "webp" {
+      var data bytes.Buffer
+      src := bytes.NewBuffer(obuf)
+
+      img,_,err := image.Decode(src)
+
+      if err != nil {
+        log.Println("failed to decode magickwand output for ", filePath)
+        http.Error(w,err.Error(), http.StatusNotFound)
+        return
+      }
+
+      if webp.Encode(&data, img, &webp.Options{ false, 80}); err != nil {
+        log.Println("failed to convert image to webp for ", filePath)
+        http.Error(w,err.Error(), http.StatusNotFound)
+        return
+      }
+
+      obuf = data.Bytes()
     }
+
 
     // cache the result, if we actually did a resize
     if (dws != "" && (width !=0 || height != 0) ) {
       log.Println("sending request to downstream for caching " + r.URL.Path)
-      chD <- DSData{data: &bytes, path: r.URL.Path, mimeType: mimeType}
-    } 
+      chD <- DSData{data: &obuf, path: r.URL.Path, mimeType: mimeType}
+    }
+
+    if r.Method != "HEAD" {
+      w.Write(obuf)
+    }
+
   }
 }
