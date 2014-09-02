@@ -221,8 +221,6 @@ func Resizer(dws string, numDSThreads int, ups string,valid string) (HandlerFunc
       }
     }
 
-    w.Header().Set("Content-Length", strconv.FormatUint(uint64(len(obuf)), 10))
-    w.WriteHeader(http.StatusOK)
 
     // if webp conversion was requested, convert to webp, after magicwand resize
     if ext == ".webp" {
@@ -248,6 +246,8 @@ func Resizer(dws string, numDSThreads int, ups string,valid string) (HandlerFunc
 
     log.Println("completed resize in ",time.Since(start))
 
+    w.Header().Set("Content-Length", strconv.FormatUint(uint64(len(obuf)), 10))
+    w.WriteHeader(http.StatusOK)
 
     // cache the result, if we actually did a resize
     if (dws != "" && (width !=0 || height != 0) ) {
