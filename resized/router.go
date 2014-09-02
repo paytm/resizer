@@ -149,6 +149,7 @@ func Resizer(dws string, numDSThreads int, ups string,valid string) (HandlerFunc
   return func(w http.ResponseWriter, r* http.Request, next http.HandlerFunc) {
 
     var obuf []byte
+    var wquality float32
 
     if (strings.HasPrefix(r.URL.Path,"/images/catalog/") == false) {
       log.Println("skipping ",r.URL.Path)
@@ -174,7 +175,7 @@ func Resizer(dws string, numDSThreads int, ups string,valid string) (HandlerFunc
 
     if ext == ".webp" {
       filePath = strings.TrimSuffix(filePath,".webp")
-      wquality := quality
+      wquality = float32(quality)
       quality = 100
     }
     
@@ -237,7 +238,7 @@ func Resizer(dws string, numDSThreads int, ups string,valid string) (HandlerFunc
         return
       }
 
-      if webp.Encode(&data, img, &webp.Options{ false, unit(wquality)}); err != nil {
+      if webp.Encode(&data, img, &webp.Options{ false, wquality }); err != nil {
         log.Println("failed to convert image to webp for ", filePath)
         http.Error(w,err.Error(), http.StatusNotFound)
         return
