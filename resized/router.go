@@ -174,6 +174,8 @@ func Resizer(dws string, numDSThreads int, ups string,valid string) (HandlerFunc
 
     if ext == ".webp" {
       filePath = strings.TrimSuffix(filePath,".webp")
+      wquality := quality
+      quality = 100
     }
     
     start := time.Now()
@@ -235,7 +237,7 @@ func Resizer(dws string, numDSThreads int, ups string,valid string) (HandlerFunc
         return
       }
 
-      if webp.Encode(&data, img, &webp.Options{ false, 80}); err != nil {
+      if webp.Encode(&data, img, &webp.Options{ false, unit(wquality)}); err != nil {
         log.Println("failed to convert image to webp for ", filePath)
         http.Error(w,err.Error(), http.StatusNotFound)
         return
