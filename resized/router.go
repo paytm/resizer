@@ -82,6 +82,9 @@ func getFilePathResQuality(url string) (err error,path string, width, height, qu
   if (res != nil) {
     width,_ = strconv.Atoi(res[0])
     height,_ = strconv.Atoi(res[1])
+    if (width < 0 || height < 0) {
+      err = errors.New("Invalid Aspect Ratio")
+    }
   }
   return
 }
@@ -202,6 +205,11 @@ func Resizer(dws string, numDSThreads int, ups string,valid string) (HandlerFunc
       return
     }
 
+   if len(body) == 0 {
+     log.Println("Bad Image size - zero content length ", r.URL.Path)
+     http.Error(w, "Invalid Image", http.StatusBadRequest)
+     return
+   }
 
     mimeType := mime.TypeByExtension(filePath[strings.LastIndex(filePath,"."):])
     w.Header().Set("Content-Type", mimeType)
