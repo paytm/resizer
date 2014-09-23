@@ -214,11 +214,12 @@ func Resizer(dws string, numDSThreads int, ups string,valid string) (HandlerFunc
     mimeType := mime.TypeByExtension(filePath[strings.LastIndex(filePath,"."):])
     w.Header().Set("Content-Type", mimeType)
 
-    // for now, save original on downstream as well
+    /*
     if (dws != "") {
       log.Println("issuing cache request for original ",filePath);
       chD <- DSData{data: &body, path: filePath, mimeType: mimeType}
     }
+    */
  
     start = time.Now()
     if (width == 0 && height == 0) {
