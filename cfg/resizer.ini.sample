@@ -4,6 +4,7 @@ ValidSizes = 210x210,300x250
 
 [Upstream]
 URI = http://catalogadmin.paytm.com
+Timeout = 1s
 
 [Downstream]
 URI = s3://ABCDEFGHIJKLMNOP:***************@s3endpoint
