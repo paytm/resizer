@@ -9,7 +9,6 @@ import (
   "net/http"
   "net/url"
   "github.com/gographics/imagick/imagick"
-  "github.com/chai2010/webp"
   "log"
   "strings"
   "strconv"
@@ -17,12 +16,8 @@ import (
   "errors"
   "io/ioutil"
   "regexp"
-  "bytes"
   "time"
   "fmt"
-  "image"
-  _ "image/jpeg"
-  _ "image/png"
 )
 
 // These constants define the structure of a resize url
@@ -235,24 +230,13 @@ func Resizer(dws string, numDSThreads int, ups string,valid string) (HandlerFunc
 
     // if webp conversion was requested, convert to webp, after magicwand resize
     if ext == ".webp" {
-      var data bytes.Buffer
-      src := bytes.NewBuffer(obuf)
-
-      img,_,err := image.Decode(src)
+      obuf,err = EncodeWebp(obuf,wquality)
 
       if err != nil {
-        log.Println("failed to decode magickwand output for ", filePath)
+        log.Println("failed to convert to webp ", filePath, err.Error())
         http.Error(w,err.Error(), http.StatusNotFound)
         return
       }
-
-      if webp.Encode(&data, img, &webp.Options{ false, wquality }); err != nil {
-        log.Println("failed to convert image to webp for ", filePath)
-        http.Error(w,err.Error(), http.StatusNotFound)
-        return
-      }
-
-      obuf = data.Bytes()
     }
 
     log.Println("completed resize in ",time.Since(start))
