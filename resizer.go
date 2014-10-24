@@ -28,7 +28,7 @@ type Config struct {
 func readConfig(cfg *Config,path string) bool {
   err := gcfg.ReadFileInto(cfg,path + "/resizer.ini")
   if err == nil {
-    log.Println("read config from ",path)
+    log.Println("reading config from ",path)
     return true
   }
   return false
@@ -43,10 +43,16 @@ func main() {
     os.Exit(1)
   }
 
-  logging.Init()
+  v := flag.Bool("version",false,"prints resizer version")
+  logging.Init() // this sets -e & -l flags
   flag.Parse()
-  logging.LogInit()
 
+  if *v {
+    log.Println(ResizerVersion())
+    os.Exit(0)
+  }
+
+  logging.LogInit()
   mux := http.NewServeMux()
   mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
     http.Error(w, "File not found", http.StatusNotFound)

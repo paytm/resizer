@@ -25,3 +25,23 @@ URI = http://catalogadmin.paytm.com # Server to download source images from
 [Downstream]
 URI = s3://ABCDEFGHIJ:yoursecrets3keygoeshere@assets.paytm.com # S3 server to save resized images to
 ~~~
+
+## Pre-commit hook
+
+The following hook should be copied to .git/hooks/pre-commit to enable versioning.
+
+~~~
+#!/bin/sh
+ 
+#picked from  http://alimoeenysbrain.blogspot.com/2013/10/automatic-versioning-with-git-commit.html
+VERBASE=$(git rev-parse --verify HEAD | cut -c 1-7)
+echo $VERBASE
+NUMVER=$(awk '{printf("%s", $0); next}' version.go | sed 's/.*Resizer\.//' | sed 's/\..*//')
+echo "old version: $NUMVER"
+NEWVER=$(expr $NUMVER + 1)
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+echo "new version: Resizer.$NEWVER.$VERBASE"
+BODY="package main\n\nfunc ResizerVersion() string {\n\treturn \"Resizer.$NEWVER.$BRANCH.$VERBASE\"\n}\n"
+echo $BODY > version.go
+git add version.go
+~~~
