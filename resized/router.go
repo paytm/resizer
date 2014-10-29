@@ -95,7 +95,7 @@ func downstreamHandler(ds Downstream,ch chan DSData) {
   }
 }
 
-func Resizer(dws string, numDSThreads int, ups string,valid string) (HandlerFunc) {
+func Resizer(dwc DownstreamCfg, upc UpstreamCfg,valid string) (HandlerFunc) {
 
   var server Upstream
   var ds Downstream
@@ -104,15 +104,15 @@ func Resizer(dws string, numDSThreads int, ups string,valid string) (HandlerFunc
 
   imagick.Initialize()
 
-  url,err := url.Parse(ups)
+  url,err := url.Parse(upc.URI)
   if err != nil {
     log.Panic("Bad URL scheme")
   }
 
   switch url.Scheme {
     case "http":
-      server = &HTTPUpstream{ upstreamURI: ups}
-      log.Println("Serving using " + ups)
+      server = &HTTPUpstream{ upstreamURI: upc.URI}
+      log.Println("Serving using " + upc.URI)
     case "file":
       server = &FileUpstream{ upstreamURI: url.Path }
       log.Println("Serving using " + url.Path)
@@ -120,8 +120,10 @@ func Resizer(dws string, numDSThreads int, ups string,valid string) (HandlerFunc
       log.Panic("Unsupported url scheme " + url.Scheme)
   }
 
-  if dws != "" {
-    url,err = url.Parse(dws)
+  server.Init(upc) // initialize upstream
+
+  if dwc.URI != "" {
+    url,err = url.Parse(dwc.URI)
 
     if err != nil {
       log.Panic("Bad url scheme for downstream")
@@ -129,7 +131,7 @@ func Resizer(dws string, numDSThreads int, ups string,valid string) (HandlerFunc
 
     switch url.Scheme {
       case "s3":
-        ds = &S3Downstream{ downstreamURI: dws }
+        ds = &S3Downstream{ downstreamURI: dwc.URI }
         log.Println("Caching using " + url.Host)
       case "file":
         ds = &FileDownstream{ downstreamURI: url.Path}
@@ -139,7 +141,7 @@ func Resizer(dws string, numDSThreads int, ups string,valid string) (HandlerFunc
     }
 
     ds.Init()
-    for i := 0; i < numDSThreads; i++ {
+    for i := 0; i < dwc.MaxThreads; i++ {
       go downstreamHandler(ds,chD)
     }
   }
@@ -188,7 +190,7 @@ func Resizer(dws string, numDSThreads int, ups string,valid string) (HandlerFunc
 
     if err != nil {
       log.Println("upstream error with ",r.URL.Path)
-      http.Error(w, "File not found", http.StatusNotFound)
+      http.Error(w, err.Error(), http.StatusNotFound)
       return
     }
 
@@ -210,7 +212,7 @@ func Resizer(dws string, numDSThreads int, ups string,valid string) (HandlerFunc
     w.Header().Set("Content-Type", mimeType)
 
     // for now, save original on downstream as well
-    if (dws != "") {
+    if (dwc.URI != "") {
       log.Println("issuing cache request for original ",filePath);
       chD <- DSData{data: &body, path: filePath, mimeType: mimeType}
     }
@@ -245,7 +247,7 @@ func Resizer(dws string, numDSThreads int, ups string,valid string) (HandlerFunc
     w.WriteHeader(http.StatusOK)
 
     // cache the result, if we actually did a resize
-    if (dws != "" && (width !=0 || height != 0) ) {
+    if (dwc.URI != "" && (width !=0 || height != 0) ) {
       log.Println("sending request to downstream for caching " + r.URL.Path)
       chD <- DSData{data: &obuf, path: r.URL.Path, mimeType: mimeType}
     }

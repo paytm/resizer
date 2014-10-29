@@ -2,6 +2,7 @@ package resized
 
 import (
   "net/http"
+  "time"
   "io"
   "os"
   "errors"
@@ -9,7 +10,7 @@ import (
 )
 
 type Upstream interface {
-  ServeOriginal(w http.ResponseWriter, r *http.Request, path string)
+  Init(UpstreamCfg) error
   Get(w http.ResponseWriter, r *http.Request, path string) (io.ReadCloser,error)
 }
 
@@ -17,8 +18,8 @@ type FileUpstream struct {
   upstreamURI string
 }
 
-func (u *FileUpstream) ServeOriginal(w http.ResponseWriter, r*http.Request, path string) {
-  http.ServeFile(w,r,u.upstreamURI + path)
+func (u *FileUpstream) Init(UpstreamCfg) error {
+  return nil
 }
 
 func (u *FileUpstream) Get(w http.ResponseWriter, r *http.Request, path string) (file io.ReadCloser, err error) {
@@ -28,16 +29,21 @@ func (u *FileUpstream) Get(w http.ResponseWriter, r *http.Request, path string) 
 
 type HTTPUpstream struct {
   upstreamURI string
+  client      *http.Client
 }
 
-func (u *HTTPUpstream) ServeOriginal(w http.ResponseWriter, r*http.Request, path string) {
-  log.Println("serving ", u.upstreamURI + path)
-  http.Redirect(w,r,u.upstreamURI + path,302)
+func (u *HTTPUpstream) Init(upc UpstreamCfg) error {
+  d,err := time.ParseDuration(upc.Timeout)
+  if err == nil {
+    u.client = &http.Client{ Timeout: d }
+    log.Println("created client with timeout ",d);
+  }
+  return err
 }
 
 func (u *HTTPUpstream) Get(w http.ResponseWriter, r *http.Request, path string) (file io.ReadCloser, err error) {
     log.Println("fetching " + u.upstreamURI + path)
-    resp,err := http.Get(u.upstreamURI + path)
+    resp,err := u.client.Get(u.upstreamURI + path)
 
     if (err == nil) {
       file = resp.Body

@@ -6,38 +6,14 @@ import (
   "os"
   "github.com/paytm/resizer/resized"
   "github.com/codegangsta/negroni"
-  "code.google.com/p/gcfg"
   "github.com/paytm/resizer/logging"
   "flag"
 )
 
-type Config struct {
-  Upstream struct {
-    URI string
-  }
-  Downstream struct {
-    URI string
-    MaxThreads int
-  }
-  Server struct {
-   Port string
-   ValidSizes string
-  }
-}
-
-func readConfig(cfg *Config,path string) bool {
-  err := gcfg.ReadFileInto(cfg,path + "/resizer.ini")
-  if err == nil {
-    log.Println("reading config from ",path)
-    return true
-  }
-  return false
-}
-
 func main() {
 
-  var cfg Config
-  ok := readConfig(&cfg, ".") || readConfig(&cfg,"/etc")
+  var cfg resized.Config
+  ok := resized.ReadConfig(&cfg, ".") || resized.ReadConfig(&cfg,"/etc")
   if (!ok) {
     log.Println("failed to read resizer.ini from CWD or /etc")
     os.Exit(1)
@@ -59,7 +35,7 @@ func main() {
   })
 
   n := negroni.Classic()
-  n.Use(negroni.HandlerFunc(resized.Resizer(cfg.Downstream.URI, cfg.Downstream.MaxThreads, cfg.Upstream.URI, cfg.Server.ValidSizes)))
+  n.Use(negroni.HandlerFunc(resized.Resizer(cfg.Downstream, cfg.Upstream, cfg.Server.ValidSizes)))
   n.UseHandler(mux)
   n.Run(":" + cfg.Server.Port)
 }
