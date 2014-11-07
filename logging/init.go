@@ -44,7 +44,7 @@ func reopen(fd int,filename string) {
 
   if (err != nil) {
     log.Println("Error in opening ",filename,err)
-    return
+    os.Exit(2)
   }
 
   syscall.Dup2(int(logFile.Fd()), fd)
