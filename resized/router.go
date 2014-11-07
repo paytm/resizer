@@ -120,7 +120,9 @@ func Resizer(dwc DownstreamCfg, upc UpstreamCfg,valid string) (HandlerFunc) {
       log.Panic("Unsupported url scheme " + url.Scheme)
   }
 
-  server.Init(upc) // initialize upstream
+  if err = server.Init(upc); err != nil { 
+      log.Panic("failed to initialize upstream")
+  }
 
   if dwc.URI != "" {
     url,err = url.Parse(dwc.URI)

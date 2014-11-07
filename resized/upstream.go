@@ -34,11 +34,12 @@ type HTTPUpstream struct {
 
 func (u *HTTPUpstream) Init(upc UpstreamCfg) error {
   d,err := time.ParseDuration(upc.Timeout)
-  if err == nil {
-    u.client = &http.Client{ Timeout: d }
-    log.Println("created client with timeout ",d);
+  if err != nil {
+    d = 0 // not fatal
   }
-  return err
+  u.client = &http.Client{ Timeout: d }
+  log.Println("created client with timeout ",d);
+  return nil
 }
 
 func (u *HTTPUpstream) Get(w http.ResponseWriter, r *http.Request, path string) (file io.ReadCloser, err error) {
