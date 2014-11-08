@@ -1,6 +1,6 @@
 package main
 
 func ResizerVersion() string {
-	return "Resizer.7.master.f87830a"
+	return "Resizer.8.master.fe8094d"
 }
 

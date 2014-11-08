@@ -1,6 +1,7 @@
 [Server]
 Port = 4000
 ValidSizes = 210x210,300x250
+Extensions = .jpeg .jpg .png .webp
 
 [Upstream]
 URI = http://catalogadmin.paytm.com

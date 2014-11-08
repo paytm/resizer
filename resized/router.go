@@ -95,7 +95,7 @@ func downstreamHandler(ds Downstream,ch chan DSData) {
   }
 }
 
-func Resizer(dwc DownstreamCfg, upc UpstreamCfg,valid string) (HandlerFunc) {
+func Resizer(dwc DownstreamCfg, upc UpstreamCfg, scfg ServerCfg) (HandlerFunc) {
 
   var server Upstream
   var ds Downstream
@@ -166,6 +166,8 @@ func Resizer(dwc DownstreamCfg, upc UpstreamCfg,valid string) (HandlerFunc) {
       return
     }
 
+    valid := scfg.ValidSizes
+
     if valid != "" && strings.Contains(valid,fmt.Sprintf("%dx%d",width,height)) != true {
       log.Printf("invalid size requested in %s, %dx%d\n",r.URL.Path,width,height);
       http.Error(w, "Invalid size specified.", http.StatusForbidden)
@@ -174,6 +176,12 @@ func Resizer(dwc DownstreamCfg, upc UpstreamCfg,valid string) (HandlerFunc) {
 
     // if .webp is at the end of url, webp has been requested
     ext := filePath[strings.LastIndex(filePath,"."):]
+
+    if scfg.Extensions != "" && strings.Contains(scfg.Extensions,ext) != true {
+      log.Printf("invalid extension %s requested in %s",ext,r.URL.Path)
+      http.Error(w, "Unsupported Media", http.StatusUnsupportedMediaType)
+      return
+    }
 
     if ext == ".webp" {
       filePath = strings.TrimSuffix(filePath,".webp")

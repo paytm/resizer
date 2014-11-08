@@ -14,13 +14,16 @@ type DownstreamCfg struct {
   MaxThreads int
 }
 
+type ServerCfg struct {
+   Port string
+   ValidSizes string
+   Extensions string
+}
+
 type Config struct {
   Upstream UpstreamCfg
   Downstream DownstreamCfg
-  Server struct {
-   Port string
-   ValidSizes string
-  }
+  Server ServerCfg 
 }
 
 func ReadConfig(cfg *Config,path string) bool {
