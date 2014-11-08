@@ -161,8 +161,8 @@ func Resizer(dwc DownstreamCfg, upc UpstreamCfg,valid string) (HandlerFunc) {
 
     err,filePath,width,height,quality := getFilePathResQuality(r.URL.Path)
 
-    if err != nil {
-      http.Error(w, err.Error(), http.StatusForbidden)
+    if err != nil || strings.LastIndex(filePath,".") == -1 {
+      http.Error(w, "Forbidden", http.StatusForbidden)
       return
     }
 
