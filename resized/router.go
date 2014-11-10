@@ -221,17 +221,20 @@ func Resizer(dwc DownstreamCfg, upc UpstreamCfg, scfg ServerCfg) (HandlerFunc) {
     mimeType := mime.TypeByExtension(filePath[strings.LastIndex(filePath,"."):])
     w.Header().Set("Content-Type", mimeType)
 
+    /*
     // for now, save original on downstream as well
     if (dwc.URI != "") {
       log.Println("issuing cache request for original ",filePath);
       chD <- DSData{data: &body, path: filePath, mimeType: mimeType}
     }
+    */
  
     start = time.Now()
     if (width == 0 && height == 0) {
       obuf = body
     } else {
       obuf,err = Resize(uint(width), uint(height), uint(quality), body)
+      body = nil // free reference
       if err != nil {
         log.Println("Failed to resize image ", r.URL.Path)
         http.Error(w, err.Error(), http.StatusNotFound)
@@ -246,7 +249,7 @@ func Resizer(dwc DownstreamCfg, upc UpstreamCfg, scfg ServerCfg) (HandlerFunc) {
 
       if err != nil {
         log.Println("failed to convert to webp ", filePath, err.Error())
-        http.Error(w,err.Error(), http.StatusNotFound)
+        http.Error(w,err.Error(), http.StatusInternalServerError)
         return
       }
     }
