@@ -18,6 +18,7 @@ type ServerCfg struct {
    Port string
    ValidSizes string
    Extensions string
+   Rate int
 }
 
 type Config struct {
