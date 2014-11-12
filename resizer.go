@@ -6,10 +6,12 @@ import (
   "fmt"
   "time"
   "os"
-  "github.com/paytm/resizer/resized"
+  // "github.com/paytm/resizer/resized"
+  "./resized"
   "github.com/codegangsta/negroni"
   "github.com/paytm/resizer/logging"
   "flag"
+  "./wrapper"
 )
 
 func main() {
@@ -37,7 +39,7 @@ func main() {
   })
 
   n := negroni.Classic()
-  n.Use(negroni.HandlerFunc(resized.Resizer(cfg.Downstream, cfg.Upstream, cfg.Server)))
+  n.Use(negroni.HandlerFunc(wrapper.RateLimit(resized.Resizer(cfg.Downstream, cfg.Upstream, cfg.Server))))
   n.UseHandler(mux)
   n.Run(":" + cfg.Server.Port)
   s := &http.Server{
