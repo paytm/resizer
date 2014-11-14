@@ -40,12 +40,4 @@ func main() {
   n.Use(negroni.HandlerFunc(resized.Resizer(cfg.Downstream, cfg.Upstream, cfg.Server)))
   n.UseHandler(mux)
   n.Run(":" + cfg.Server.Port)
-  s := &http.Server{
-	Addr		: ":" + cfg.Server.Port,
-	Handler		: n,
-	ReadTimeout	: 10 * time.Second,
-	WriteTimeout	: 10 * time.Second,
-	MaxHeaderBytes	: 1 << 18,
-  }
-  log.Fatal(s.ListenAndServe())
 }
