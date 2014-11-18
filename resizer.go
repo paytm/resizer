@@ -4,7 +4,6 @@ import (
   "net/http"
   "log"
   "fmt"
-  "time"
   "os"
   // "github.com/paytm/resizer/resized"
   "./resized"
@@ -19,7 +18,7 @@ func main() {
   var cfg resized.Config
   ok := resized.ReadConfig(&cfg, ".") || resized.ReadConfig(&cfg,"/etc")
   if (!ok) {
-    log.Println("failed to read resizer.ini from CWD or /etc")
+    log.Println("failed to read resizer.ini from CWD or /etc ")
     os.Exit(1)
   }
 
@@ -39,15 +38,7 @@ func main() {
   })
 
   n := negroni.Classic()
-  n.Use(negroni.HandlerFunc(wrapper.RateLimit(resized.Resizer(cfg.Downstream, cfg.Upstream, cfg.Server))))
+  n.Use(negroni.HandlerFunc(wrapper.RateLimit(resized.Resizer(cfg.Downstream, cfg.Upstream, cfg.Server),cfg.Server.Rate)))
   n.UseHandler(mux)
   n.Run(":" + cfg.Server.Port)
-  s := &http.Server{
-	Addr		: ":" + cfg.Server.Port,
-	Handler		: n,
-	ReadTimeout	: 10 * time.Second,
-	WriteTimeout	: 10 * time.Second,
-	MaxHeaderBytes	: 1 << 18,
-  }
-  log.Fatal(s.ListenAndServe())
 }
