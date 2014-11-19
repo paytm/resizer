@@ -10,7 +10,7 @@ import (
   "github.com/codegangsta/negroni"
   "github.com/paytm/resizer/logging"
   "flag"
-  "./wrapper"
+  "./middleware"
 )
 
 func main() {
@@ -38,7 +38,9 @@ func main() {
   })
 
   n := negroni.Classic()
-  n.Use(negroni.HandlerFunc(wrapper.RateLimit(resized.Resizer(cfg.Downstream, cfg.Upstream, cfg.Server),cfg.Server.Rate)))
+  n.Use(middleware.Ratelimit(cfg.Server.Rate))
+  n.Use(negroni.HandlerFunc(resized.Resizer(cfg.Downstream, cfg.Upstream, cfg.Server)))
+  
   n.UseHandler(mux)
   n.Run(":" + cfg.Server.Port)
 }
