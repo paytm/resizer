@@ -220,6 +220,7 @@ func Resizer(dwc DownstreamCfg, upc UpstreamCfg, scfg ServerCfg) (HandlerFunc) {
 
     mimeType := mime.TypeByExtension(filePath[strings.LastIndex(filePath,"."):])
     w.Header().Set("Content-Type", mimeType)
+    w.Header().Set("Cache-Control","max-age=31556926")
 
     /*
     // for now, save original on downstream as well

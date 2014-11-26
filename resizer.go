@@ -4,7 +4,6 @@ import (
   "net/http"
   "log"
   "fmt"
-  "time"
   "os"
   "github.com/paytm/resizer/resized"
   "github.com/codegangsta/negroni"
