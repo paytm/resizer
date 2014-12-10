@@ -5,11 +5,11 @@ import (
   "log"
   "fmt"
   "os"
-  "./resized"
+  "github.com/paytm/resizer/resized"
   "github.com/codegangsta/negroni"
   "github.com/paytm/resizer/logging"
   "flag"
-  "./middleware"
+  "github.com/paytm/resizer/middleware"
 )
 
 func main() {

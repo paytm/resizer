@@ -2,7 +2,7 @@ package middleware
 
 import (
     "net/http"
-    "../ratelimit"
+    "github.com/paytm/resizer/ratelimit"
     )
 
 // Ratelimit has to be pointed to github repo
