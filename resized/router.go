@@ -17,6 +17,7 @@ import (
   "io/ioutil"
   "regexp"
   "time"
+  "os"
   "fmt"
 )
 
@@ -32,6 +33,15 @@ const (
 type HandlerFunc func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc)
 
 var sizeRegex *regexp.Regexp
+
+func validateExtensions(ext string) {
+  for _,typ := range(strings.Split(ext," ")) {
+    if ( mime.TypeByExtension("." + typ) == "") {
+      log.Println("No Mime type configured for " + typ)
+      os.Exit(1)
+    }
+  }
+}
 
 func getFilePathResQuality(url string) (err error,path string, width, height, quality int) {
   var res []string
@@ -102,6 +112,7 @@ func Resizer(dwc DownstreamCfg, upc UpstreamCfg, scfg ServerCfg) (HandlerFunc) {
   sizeRegex = regexp.MustCompile("/([0-9]+)x([0-9]+)/")
   chD := make(chan DSData)
 
+  validateExtensions(scfg.Extensions)
   imagick.Initialize()
 
   url,err := url.Parse(upc.URI)
@@ -218,7 +229,7 @@ func Resizer(dwc DownstreamCfg, upc UpstreamCfg, scfg ServerCfg) (HandlerFunc) {
      return
    }
 
-    mimeType := mime.TypeByExtension(filePath[strings.LastIndex(filePath,"."):])
+    mimeType := mime.TypeByExtension(ext)
     w.Header().Set("Content-Type", mimeType)
     w.Header().Set("Cache-Control","max-age=31556926")
 
