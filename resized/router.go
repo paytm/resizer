@@ -34,13 +34,18 @@ type HandlerFunc func(rw http.ResponseWriter, r *http.Request, next http.Handler
 
 var sizeRegex *regexp.Regexp
 
-func validateExtensions(ext string) {
+func validateExtensions(ext string) bool {
+
+  if ext == "" {
+    return true
+  }
   for _,typ := range(strings.Split(ext," ")) {
     if ( mime.TypeByExtension("." + typ) == "") {
       log.Println("No Mime type configured for " + typ)
-      os.Exit(1)
+      return false
     }
   }
+  return true
 }
 
 func getFilePathResQuality(url string) (err error,path string, width, height, quality int) {
@@ -112,7 +117,10 @@ func Resizer(dwc DownstreamCfg, upc UpstreamCfg, scfg ServerCfg) (HandlerFunc) {
   sizeRegex = regexp.MustCompile("/([0-9]+)x([0-9]+)/")
   chD := make(chan DSData)
 
-  validateExtensions(scfg.Extensions)
+  if validateExtensions(scfg.Extensions) == false {
+    os.Exit(1)
+  }
+
   imagick.Initialize()
 
   url,err := url.Parse(upc.URI)
