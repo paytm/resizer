@@ -2,6 +2,7 @@ package resized
 
 import (
   "code.google.com/p/gcfg"
+  "log"
 )
 
 type UpstreamCfg struct {
@@ -18,6 +19,7 @@ type ServerCfg struct {
    Port string
    ValidSizes string
    Extensions string
+   Rate int
 }
 
 type Config struct {
@@ -26,10 +28,11 @@ type Config struct {
   Server ServerCfg 
 }
 
-func ReadConfig(cfg *Config,path string) bool {
+func ReadConfig(cfg *Config,path string) (ok bool) {
   err := gcfg.ReadFileInto(cfg,path + "/resizer.ini")
-  if err == nil {
-    return true
+  if (err != nil) {
+    log.Println("error reading file from ",path,err.Error())
+    return false
   }
-  return false
+  return true
 }
