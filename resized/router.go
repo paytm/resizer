@@ -40,7 +40,7 @@ func validateExtensions(ext string) bool {
     return true
   }
   for _,typ := range(strings.Split(ext," ")) {
-    if ( mime.TypeByExtension("." + typ) == "") {
+    if ( mime.TypeByExtension(typ) == "") {
       log.Println("No Mime type configured for " + typ)
       return false
     }
