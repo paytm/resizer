@@ -194,10 +194,10 @@ func Resizer(dwc DownstreamCfg, upc UpstreamCfg, scfg ServerCfg) (HandlerFunc) {
     }
 
     // if .webp is at the end of url, webp has been requested
-    ext := filePath[strings.LastIndex(filePath,"."):]
+    ext := strings.ToLower(filePath[strings.LastIndex(filePath,"."):])
 
     if scfg.Extensions != "" && strings.Contains(scfg.Extensions,ext) != true {
-      log.Printf("invalid extension %s requested in %s",ext,r.URL.Path)
+      log.Printf("invalid extensions %s requested in %s",ext,r.URL.Path)
       http.Error(w, "Unsupported Media", http.StatusUnsupportedMediaType)
       return
     }
