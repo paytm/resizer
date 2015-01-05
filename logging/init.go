@@ -30,7 +30,6 @@ func sigHandler(c chan os.Signal) {
 }
 
 func LogInit() {
-  log.Println("Log Init: using ",stdoutLog,stderrLog)
   reopen(1,stdoutLog)
   reopen(2,stderrLog)
 }
@@ -40,6 +39,7 @@ func reopen(fd int,filename string) {
     return
   }
 
+  log.Println("Log Init: using ",filename)
   logFile,err := os.OpenFile(filename, os.O_WRONLY | os.O_CREATE | os.O_APPEND, 0644)
 
   if (err != nil) {

@@ -28,7 +28,7 @@ type Config struct {
 }
 
 func ReadConfig(cfg *Config,path string) (ok bool) {
-  err := gcfg.ReadFileInto(cfg,path + "/resizer.ini")
+  err := gcfg.ReadFileInto(cfg,path)
   if (err != nil) {
     return false
   }

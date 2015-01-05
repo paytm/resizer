@@ -15,11 +15,8 @@ import (
 func main() {
 
   var cfg resized.Config
-  ok := resized.ReadConfig(&cfg, ".") || resized.ReadConfig(&cfg,"/etc")
-  if (!ok) {
-    log.Println("failed to read resizer.ini from CWD or /etc ")
-    os.Exit(1)
-  }
+
+  cfgpath := flag.String("c","./resizer.ini","config file path")
 
   v := flag.Bool("version",false,"prints resizer version")
   logging.Init() // this sets -e & -l flags
@@ -28,6 +25,13 @@ func main() {
   if *v {
     fmt.Println(ResizerVersion())
     os.Exit(0)
+  }
+
+  log.Println("using config from ",*cfgpath)
+  ok := resized.ReadConfig(&cfg, *cfgpath) || resized.ReadConfig(&cfg,"/etc/resizer.ini")
+  if (!ok) {
+    log.Println("failed to read resizer.ini from ", cfgpath)
+    os.Exit(1)
   }
 
   logging.LogInit()
