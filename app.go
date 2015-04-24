@@ -7,7 +7,7 @@ import (
   "os"
   "github.com/paytm/resizer/resized"
   "github.com/codegangsta/negroni"
-  "github.com/paytm/resizer/logging"
+  "github.com/paytm/logging"
   "flag"
   "github.com/paytm/resizer/middleware"
 )
@@ -19,7 +19,6 @@ func main() {
   cfgpath := flag.String("c","./resizer.ini","config file path")
 
   v := flag.Bool("version",false,"prints resizer version")
-  logging.Init() // this sets -e & -l flags
   flag.Parse()
 
   if *v {
