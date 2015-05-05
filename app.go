@@ -8,6 +8,7 @@ import (
   "github.com/paytm/resizer/resized"
   "github.com/codegangsta/negroni"
   "github.com/paytm/logging"
+  config "github.com/qzaidi/consulcfg"
   "flag"
   "github.com/paytm/resizer/middleware"
 )
@@ -19,6 +20,8 @@ func main() {
   cfgpath := flag.String("c","./resizer.ini","config file path")
 
   v := flag.Bool("version",false,"prints resizer version")
+  useConsul := flag.Bool("consul",false,"use consul for config")
+
   flag.Parse()
 
   if *v {
@@ -26,8 +29,14 @@ func main() {
     os.Exit(0)
   }
 
-  log.Println("using config from ",*cfgpath)
-  ok := resized.ReadConfig(&cfg, *cfgpath) || resized.ReadConfig(&cfg,"/etc/resizer.ini")
+  var ok bool
+  if *useConsul {
+    ok = config.ReadConfig("resizer",&cfg)
+  } else {
+    log.Println("using config from ",*cfgpath)
+    ok = resized.ReadConfig(&cfg, *cfgpath) || resized.ReadConfig(&cfg,"/etc/resizer.ini")
+  }
+
   if (!ok) {
     log.Println("failed to read resizer.ini from ", cfgpath)
     os.Exit(1)
