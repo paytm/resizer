@@ -6,11 +6,11 @@ import (
   "fmt"
   "os"
   "github.com/paytm/resizer/resized"
-  "github.com/codegangsta/negroni"
   "github.com/paytm/logging"
   config "github.com/qzaidi/consulcfg"
   "flag"
-  "github.com/paytm/resizer/middleware"
+  grace "gopkg.in/paytm/grace.v1"
+  //"github.com/paytm/resizer/middleware"
 )
 
 func main() {
@@ -38,25 +38,21 @@ func main() {
   }
 
   if (!ok) {
-    log.Println("failed to read resizer.ini from ", cfgpath)
+    log.Println("failed to read resizer config")
     os.Exit(1)
   }
 
   logging.LogInit()
-  mux := http.NewServeMux()
-  mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
-    http.Error(w, "File not found", http.StatusNotFound)
-  })
 
-  n := negroni.Classic()
-
+  /* QZ: disable rate limits for now, first we move to graceful
   if cfg.Server.Rate != 0 {
     fmt.Printf("Rate limiting at %d req/sec\n",cfg.Server.Rate)
     n.Use(middleware.Ratelimit(cfg.Server.Rate))
   }
+  */
 
-  n.Use(negroni.HandlerFunc(resized.Resizer(cfg.Downstream, cfg.Upstream, cfg.Server)))
-  
-  n.UseHandler(mux)
-  n.Run(":" + cfg.Server.Port)
+  http.Handle("/images/catalog",resized.Resizer(cfg.Downstream, cfg.Upstream, cfg.Server))
+  log.Fatal(grace.Serve(":" + cfg.Server.Port,nil))
+
+
 }

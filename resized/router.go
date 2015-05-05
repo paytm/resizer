@@ -110,7 +110,7 @@ func downstreamHandler(ds Downstream,ch chan DSData) {
   }
 }
 
-func Resizer(dwc DownstreamCfg, upc UpstreamCfg, scfg ServerCfg) (HandlerFunc) {
+func Resizer(dwc DownstreamCfg, upc UpstreamCfg, scfg ServerCfg) http.Handler {
 
   var server Upstream
   var ds Downstream
@@ -167,16 +167,10 @@ func Resizer(dwc DownstreamCfg, upc UpstreamCfg, scfg ServerCfg) (HandlerFunc) {
     }
   }
 
-  return func(w http.ResponseWriter, r* http.Request, next http.HandlerFunc) {
+  return http.HandlerFunc(func(w http.ResponseWriter, r* http.Request) {
 
     var obuf []byte
     var wquality float32
-
-    if (strings.HasPrefix(r.URL.Path,"/images/catalog/") == false) {
-      log.Println("skipping ",r.URL.Path)
-      next(w,r);
-      return
-    }
 
     err,filePath,width,height,quality := getFilePathResQuality(r.URL.Path)
 
@@ -289,5 +283,5 @@ func Resizer(dwc DownstreamCfg, upc UpstreamCfg, scfg ServerCfg) (HandlerFunc) {
       w.Write(obuf)
     }
 
-  }
+  })
 }
