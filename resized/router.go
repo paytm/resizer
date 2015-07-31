@@ -274,7 +274,7 @@ func Resizer(dwc DownstreamCfg, upc UpstreamCfg, scfg ServerCfg) http.Handler {
     w.WriteHeader(http.StatusOK)
 
     // cache the result, if we actually did a resize
-    if (dwc.URI != "" && (width !=0 || height != 0) ) {
+    if (dwc.URI != "" && (width !=0 || height != 0 || ext == ".webp") ) {
       log.Println("sending request to downstream for caching " + r.URL.Path)
       chD <- DSData{data: &obuf, path: r.URL.Path, mimeType: mimeType}
     }

@@ -51,7 +51,7 @@ func main() {
   }
   */
 
-  http.Handle("/images/catalog",resized.Resizer(cfg.Downstream, cfg.Upstream, cfg.Server))
+  http.Handle("/",resized.Resizer(cfg.Downstream, cfg.Upstream, cfg.Server))
   log.Fatal(grace.Serve(":" + cfg.Server.Port,nil))
 
 
