@@ -59,7 +59,7 @@ func getFilePathResQuality(url string) (err error,path string, width, height, qu
   width = 0
   height = 0
 
-  if fields[0] == "category"  {
+  if fields[0] == "category"  || fields[0] == "view_item" || fields[0] == "decorator" {
     if (length >= PathComponentsCategoryMax) {
       path = Base +  strings.Join(fields[:PathComponentsCategoryMax],"/") + "/" + fields[length-1];
       resq = fields[PathComponentsCategoryMax:length-1]
