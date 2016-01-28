@@ -24,8 +24,10 @@ import (
 // These constants define the structure of a resize url
 const (
   Base = "/images/catalog/"
+  Base2 = "/images/hotels/"
   PathComponentsProductMax = 4
   PathComponentsCategoryMax = 2
+  PathComponentsHotelMax = 2
   QualityIndex = 5
   ResolutionIndex = 4
 )
@@ -53,12 +55,25 @@ func getFilePathResQuality(url string) (err error,path string, width, height, qu
   var resq []string
   fields := strings.Split(strings.TrimPrefix(url,Base),"/")
   length := len(fields)
+  reqtype := "allcatalog"
+
+  if (strings.Contains(url, Base2)) {
+    reqtype = "hotel"
+    fields = strings.Split(strings.TrimPrefix(url,Base2),"/")
+    length = len(fields)
+  }
 
   // defaults
   quality = 70
   width = 0
   height = 0
-
+ 
+  if (reqtype == "hotel") {
+    if (length >= PathComponentsHotelMax) {
+      path = Base2 +  strings.Join(fields[:PathComponentsHotelMax],"/") + "/" + fields[length-1];
+      resq = fields[PathComponentsHotelMax:length-1]
+    }
+  } else {
   if fields[0] == "category"  || fields[0] == "view_item" || fields[0] == "decorator" {
     if (length >= PathComponentsCategoryMax) {
       path = Base +  strings.Join(fields[:PathComponentsCategoryMax],"/") + "/" + fields[length-1];
@@ -72,6 +87,7 @@ func getFilePathResQuality(url string) (err error,path string, width, height, qu
   } else if matches := sizeRegex.FindString(url); matches != "" {
      resq = []string { strings.TrimPrefix(matches,"/") }
      path = strings.Join(strings.Split(url,matches),"/")
+  }
   }
 
   if (path == "") {
