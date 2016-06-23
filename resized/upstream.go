@@ -1,57 +1,57 @@
 package resized
 
 import (
-  "net/http"
-  "time"
-  "io"
-  "os"
-  "errors"
-  "log"
+	"errors"
+	"io"
+	"log"
+	"net/http"
+	"os"
+	"time"
 )
 
 type Upstream interface {
-  Init(UpstreamCfg) error
-  Get(w http.ResponseWriter, r *http.Request, path string) (io.ReadCloser,error)
+	Init(UpstreamCfg) error
+	Get(w http.ResponseWriter, r *http.Request, path string) (io.ReadCloser, error)
 }
 
 type FileUpstream struct {
-  upstreamURI string
+	upstreamURI string
 }
 
 func (u *FileUpstream) Init(UpstreamCfg) error {
-  return nil
+	return nil
 }
 
 func (u *FileUpstream) Get(w http.ResponseWriter, r *http.Request, path string) (file io.ReadCloser, err error) {
-  file, err = os.Open(u.upstreamURI + path);
-  return file,err
+	file, err = os.Open(u.upstreamURI + path)
+	return file, err
 }
 
 type HTTPUpstream struct {
-  upstreamURI string
-  client      *http.Client
+	upstreamURI string
+	client      *http.Client
 }
 
 func (u *HTTPUpstream) Init(upc UpstreamCfg) error {
-  d,err := time.ParseDuration(upc.Timeout)
-  if err != nil {
-    d = 0 // not fatal
-  }
-  u.client = &http.Client{ Timeout: d }
-  log.Println("created client with timeout ",d);
-  return nil
+	d, err := time.ParseDuration(upc.Timeout)
+	if err != nil {
+		d = 0 // not fatal
+	}
+	u.client = &http.Client{Timeout: d}
+	log.Println("created client with timeout ", d)
+	return nil
 }
 
 func (u *HTTPUpstream) Get(w http.ResponseWriter, r *http.Request, path string) (file io.ReadCloser, err error) {
-    log.Println("fetching " + u.upstreamURI + path)
-    resp,err := u.client.Get(u.upstreamURI + path)
+	log.Println("fetching " + u.upstreamURI + path)
+	resp, err := u.client.Get(u.upstreamURI + path)
 
-    if (err == nil) {
-      file = resp.Body
-      if (resp.StatusCode != 200)  {
-        err = errors.New("Not Found")
-      }
-    }
+	if err == nil {
+		file = resp.Body
+		if resp.StatusCode != 200 {
+			err = errors.New("Not Found")
+		}
+	}
 
-    return file,err
+	return file, err
 }
