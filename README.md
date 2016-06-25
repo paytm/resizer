@@ -8,7 +8,7 @@ Source images are obtained from an upstream (file/http). They can optionally be 
 Set your GOPATH, then install using
 
 ~~~
-go get github.com/qzaidi/resizer
+go get github.com/paytm/resizer
 ~~~
 
 This will create $GOPATH/bin/resizer, which is an http server.
